@@ -16,7 +16,6 @@
     "@types/express": "^4.17.21",
     "@types/lodash": "^4.17.4",
     "@types/mongoose": "^5.11.97",
-    "faker": "^6.6.6",
     "nodemon": "^3.1.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
