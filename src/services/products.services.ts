@@ -13,17 +13,21 @@ export const getProducts = async (
 
   const skip = (page - 1) * limit;
   const products = await ProductModel.find(filter)
+    .populate("category", "name")
+    .populate("createdBy", "username")
     .skip(skip)
     .limit(limit)
     .lean<IProduct[]>();
+
+  console.log(products);
+
   const total = await ProductModel.countDocuments(filter);
   const totalPages = Math.ceil(total / limit);
 
   return { products, totalPages, page, limit };
 };
 
-export const getProductById = (id: string) =>
-  ProductModel.findById(id).lean<IProduct>();
+export const getProductById = (id: string) => ProductModel.findById(id);
 
 export const getProductByCatogoryID = (id: string) =>
   ProductModel.find({ category: id }).lean<IProduct>();

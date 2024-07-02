@@ -18,8 +18,8 @@ export interface RequestProduct {
   stoke: number;
   description: string;
   image: string[];
-  createdBy: Schema.Types.ObjectId;
-  category: Schema.Types.ObjectId;
+  createdBy: string;
+  category: string;
 }
 
 export const productSchema = new Schema<IProduct>({
@@ -29,8 +29,8 @@ export const productSchema = new Schema<IProduct>({
   description: { type: String, required: true },
   image: [{ type: String, required: true }],
   createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
-  reviews: { reviewSchema },
-  category: [{ type: Schema.Types.ObjectId, ref: "Category" }],
+  reviews: [reviewSchema],
+  category: { type: Schema.Types.ObjectId, ref: "Category", required: true },
 });
 
 export const ProductModel = model<IProduct>("Product", productSchema);

@@ -1,5 +1,5 @@
 import express from "express";
-import { RequestProduct } from "../schema";
+import { ICategory, IProduct, IReview, IUser, RequestProduct } from "../schema";
 import { getCategoryById, getUserById } from "../services";
 import {
   createProduct,
@@ -23,7 +23,15 @@ export const getAllProducts = async (
       return res.status(200).json({ message: "Product's list is empty" });
     }
 
-    return res.status(200).json({ products, total: totalPages, page, limit });
+    const formattedProducts = products.map((product: IProduct) => ({
+      ...product,
+      category: (product.category as unknown as ICategory).name,
+      createdBy: (product.createdBy as unknown as IUser).username,
+    }));
+
+    return res
+      .status(200)
+      .json({ products: formattedProducts, total: totalPages, page, limit });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: "Internal server error" });
@@ -42,27 +50,39 @@ export const findProduct = async (
       return res.status(200).json({ message: "Product not found" });
     }
 
-    // Calulate average rating of the product
-    const totalRating =
-      product.reviews.reduce((acc, review) => acc + review.rating, 0) /
-      product.reviews.length;
+    const reviews = product.reviews || [];
 
+    // Calculate average rating of the product
+    const totalRating =
+      reviews.length > 0
+        ? reviews.reduce((acc, review) => acc + review.rating, 0) /
+          reviews.length
+        : 0;
+
+    // Get username of the user who created the product
+    // Get category name of the product
+    const userCreatedBy = await getUserById(product.createdBy.toString());
+    const category = await getCategoryById(product.category.toString());
+
+    // Add username to each review
     const reviewsWithMember = await Promise.all(
-      product.reviews.map(async (review) => {
+      product.reviews.map(async (review: IReview) => {
         const user = await getUserById(review.userId.toString());
-        return { ...review, userName: user ? user.username : "" };
+        return { ...review.toObject(), userName: user ? user.username : "" };
       })
     );
 
     const updateProduct = {
-      ...product,
+      ...product.toObject(),
+      category: category.name,
+      createdBy: userCreatedBy.username,
       reviews: reviewsWithMember,
     };
 
     return res.status(200).json({ product: updateProduct, totalRating });
   } catch (error) {
     console.log(error);
-    return res.sendStatus(400);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 
@@ -142,7 +162,7 @@ export const createdProduct = async (
       req.body as RequestProduct;
     const { id: userId } = req.user as any;
 
-    const existCategory = await getCategoryById(category.toString());
+    const existCategory = await getCategoryById(category);
     const existUser = await getUserById(userId);
 
     const newProduct = await createProduct({
@@ -178,7 +198,7 @@ export const updateProduct = async (
     const { name, price, stoke, description, image, category, createdBy } =
       req.body as RequestProduct;
 
-    const existCategory = await getCategoryById(category.toString());
+    const existCategory = await getCategoryById(category);
 
     await updateProductById(id, {
       name,

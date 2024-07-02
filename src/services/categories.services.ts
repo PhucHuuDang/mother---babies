@@ -1,6 +1,7 @@
-import { CategoryModel } from "../schema";
+import { CategoryModel, ICategory } from "../schema";
 
-export const getAllCategories = () => CategoryModel.find();
+export const getAllCategories = () =>
+  CategoryModel.find().populate("createdBy", "username").lean<ICategory[]>();
 
 export const getCategoryById = (id: string) => CategoryModel.findById(id);
 export const getCategoryByName = (name: string) =>

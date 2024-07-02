@@ -1,5 +1,5 @@
 import express from "express";
-import { RequestCategory } from "../schema";
+import { ICategory, IUser, RequestCategory } from "../schema";
 import {
   createNewCategory,
   deleteCategoryById,
@@ -7,6 +7,7 @@ import {
   getCategoryById,
   getCategoryByName,
   getProductByCatogoryID,
+  getUserById,
   updateCategoryById,
 } from "../services";
 
@@ -16,7 +17,16 @@ export const getCategories = async (
 ) => {
   try {
     const categories = await getAllCategories();
-    return res.status(200).json(categories);
+
+    if (!categories) {
+      return res.status(200).json({ message: "Category is empty" });
+    }
+    const formattedCategories = categories.map((category: ICategory) => ({
+      ...category,
+      createdBy: (category.createdBy as unknown as IUser).username,
+    }));
+
+    return res.status(200).json({ categories: formattedCategories });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: "Internal server error" });
@@ -34,7 +44,10 @@ export const getCategory = async (
       return res.status(404).json({ message: "Category not found" });
     }
 
-    return res.status(200).json({ category });
+    const user = await getUserById(category.createdBy.toString());
+    const updateCategory = { ...category.toObject(), createdBy: user.username };
+
+    return res.status(200).json({ category: updateCategory });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: "Internal server error" });

@@ -6,7 +6,7 @@ import {
   deleteProduct,
   updateProduct,
 } from "../controller/products.controller";
-import { admin, adminOrStaff, protect, staff } from "../middlewares";
+import { adminOrStaff, protect } from "../middlewares";
 
 export default (router: express.Router) => {
   router

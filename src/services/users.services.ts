@@ -1,4 +1,4 @@
-import { UserModel } from "../schema";
+import { IUser, UserModel } from "../schema";
 
 export const getUsers = async (
   query: string = "",
@@ -23,7 +23,7 @@ export const getUsers = async (
 export const getUserByEmail = (email: string) => UserModel.findOne({ email });
 
 export const getUserById = (id: string) =>
-  UserModel.findById(id).select("-password");
+  UserModel.findById(id).select("-password").lean<IUser>();
 
 export const createUser = (values: Record<string, any>) =>
   new UserModel(values).save().then((user) => user.toObject());
