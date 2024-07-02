@@ -3,8 +3,10 @@ import { CategoryModel } from "../schema";
 export const getAllCategories = () => CategoryModel.find();
 
 export const getCategoryById = (id: string) => CategoryModel.findById(id);
+export const getCategoryByName = (name: string) =>
+  CategoryModel.findOne({ name });
 
-export const createCategory = (values: Record<string, any>) =>
+export const createNewCategory = (values: Record<string, any>) =>
   new CategoryModel(values).save().then((category) => category.toObject());
 
 export const deleteCategoryById = (id: string) =>

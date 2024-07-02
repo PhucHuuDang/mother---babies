@@ -1,6 +1,5 @@
 import { Document, Schema, model } from "mongoose";
 import { IReview, reviewSchema } from "./reviews.schema";
-import { ICategory } from "./categories.schema";
 
 export interface IProduct extends Document {
   name: string;

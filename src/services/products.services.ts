@@ -25,6 +25,9 @@ export const getProducts = async (
 export const getProductById = (id: string) =>
   ProductModel.findById(id).lean<IProduct>();
 
+export const getProductByCatogoryID = (id: string) =>
+  ProductModel.find({ category: id }).lean<IProduct>();
+
 export const createProduct = (values: Record<string, any>) =>
   new ProductModel(values).save().then((product) => product.toObject());
 
