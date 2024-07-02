@@ -1,38 +1,53 @@
-import express from "express";
-import http from "http";
 import bodyParser from "body-parser";
-import cookieParser from "cookie-parser";
 import compression from "compression";
+import cookieParser from "cookie-parser";
 import cors from "cors";
-import mongoose from "mongoose";
+import express from "express";
+import session from "express-session";
+import connectDB from "./config/database";
+import errorHandler from "./config/error";
+import passport from "./config/passport";
 import router from "./router";
-
-const localhost = "localhost";
-const PORT = 8080;
 
 const app = express();
 
+// Connect to MongoDB
+connectDB();
+
+// Middleware
 app.use(
   cors({
+    origin: "*", // Allow all origins
     credentials: true,
   })
 );
 
+// Body parser
 app.use(compression());
 app.use(cookieParser());
 app.use(bodyParser.json());
 
-const server = http.createServer(app);
+// Session
+app.use(
+  session({
+    secret: "session-secret",
+    resave: false,
+    saveUninitialized: false,
+  })
+);
 
-server.listen(PORT, () => {
-  console.log(`Server is running on http://${localhost}:${PORT}`);
-});
+// Passport
+app.use(passport.initialize());
+app.use(passport.session());
 
-// first: Trung Anh test db co chay on hay khong, neu khong Trung Anh co the change url nay thanh url local cua Trung Anh
-const MONGO_URL = "mongodb://localhost:27017";
-mongoose.Promise = Promise;
-
-mongoose.connect(MONGO_URL);
-mongoose.connection.on("error", (error: Error) => console.log({ error }));
-
+// Routes
 app.use("/", router());
+
+// Error handler
+app.use(errorHandler);
+
+// const server = http.createServer(app);
+
+app.listen(8080, () => {
+  console.log(`Server is running on host 8080`);
+});

@@ -1,5 +1,7 @@
+// import { authentication } from "./../helpers/index";
 import express from "express";
-import { register, login } from "../controller/authentication";
+
+import { login, register } from "../controller/authentication.controller";
 
 export default (router: express.Router) => {
   router.post("/auth/register", register);
