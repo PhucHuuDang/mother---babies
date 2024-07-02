@@ -1,8 +1,17 @@
 import express from "express";
-import { deleteUser, getAllUsers } from "../controller/users";
-import { isAuthenticaed, isOwner } from "../middlewares";
+import {
+  deleteUser,
+  findUser,
+  getAllUsers,
+  updateUser,
+} from "../controller/users.controller";
+import { admin, protect, user } from "../middlewares";
 
 export default (router: express.Router) => {
-  router.get("/users", isAuthenticaed, getAllUsers);
-  router.delete("/users/:id", isAuthenticaed, isOwner, deleteUser);
+  router.route("/users").get(protect, admin, getAllUsers);
+  router
+    .route("/users/:id")
+    .get(protect, findUser)
+    .put(protect, user, updateUser)
+    .delete(protect, admin, deleteUser);
 };
