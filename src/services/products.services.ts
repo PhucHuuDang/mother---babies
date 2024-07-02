@@ -1,4 +1,4 @@
-import { ProductModel } from "../schema";
+import { IProduct, ProductModel } from "../schema";
 
 export const getProducts = async (
   query: string = "",
@@ -12,14 +12,18 @@ export const getProducts = async (
   }
 
   const skip = (page - 1) * limit;
-  const products = await ProductModel.find(filter).skip(skip).limit(limit);
+  const products = await ProductModel.find(filter)
+    .skip(skip)
+    .limit(limit)
+    .lean<IProduct[]>();
   const total = await ProductModel.countDocuments(filter);
   const totalPages = Math.ceil(total / limit);
 
   return { products, totalPages, page, limit };
 };
 
-export const getProductById = (id: string) => ProductModel.findById(id);
+export const getProductById = (id: string) =>
+  ProductModel.findById(id).lean<IProduct>();
 
 export const createProduct = (values: Record<string, any>) =>
   new ProductModel(values).save().then((product) => product.toObject());

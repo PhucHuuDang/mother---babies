@@ -42,7 +42,24 @@ export const findProduct = async (
       return res.status(200).json({ message: "Product not found" });
     }
 
-    return res.status(200).json(product);
+    // Calulate average rating of the product
+    const totalRating =
+      product.reviews.reduce((acc, review) => acc + review.rating, 0) /
+      product.reviews.length;
+
+    const reviewsWithMember = await Promise.all(
+      product.reviews.map(async (review) => {
+        const user = await getUserById(review.userId.toString());
+        return { ...review, userName: user ? user.username : "" };
+      })
+    );
+
+    const updateProduct = {
+      ...product,
+      reviews: reviewsWithMember,
+    };
+
+    return res.status(200).json({ product: updateProduct, totalRating });
   } catch (error) {
     console.log(error);
     return res.sendStatus(400);
