@@ -37,6 +37,15 @@ export const getProductById = async (id: string) => {
   return product;
 };
 
+export const getProductsByName = async (name: string) => {
+  const product = await ProductModel.find({ name })
+    .populate("category", "name")
+    .populate("createdBy", "username")
+    .populate("updatedBy", "username")
+    .lean<IProduct>();
+  return product;
+};
+
 export const getProductByCatogoryID = (id: string) =>
   ProductModel.find({ category: id }).lean<IProduct>().exec();
 

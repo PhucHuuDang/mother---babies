@@ -1,10 +1,11 @@
 import express from "express";
 
 import authentication from "./authentication";
-import users from "./users";
-import product from "./product";
-import reviews from "./reviews";
 import categories from "./categories";
+import product from "./product";
+import report from "./report";
+import reviews from "./reviews";
+import users from "./users";
 
 const router = express.Router();
 
@@ -14,5 +15,6 @@ export default (): express.Router => {
   product(router);
   reviews(router);
   categories(router);
+  report(router);
   return router;
 };
