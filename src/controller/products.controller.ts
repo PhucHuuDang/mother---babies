@@ -77,7 +77,6 @@ export const findProduct = async (
         ? (product.updatedBy as unknown as IUser).username
         : undefined,
     };
-    console.log(updateProduct);
 
     return res.status(200).json({ product: updateProduct, totalRating });
   } catch (error) {
@@ -92,6 +91,13 @@ export const deleteProduct = async (
 ) => {
   try {
     const { id } = req.params;
+
+    // Check product exist
+    const product = await getProductById(id);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
     // Delete product from database
     await deleteProductById(id);
 
@@ -102,35 +108,17 @@ export const deleteProduct = async (
   }
 };
 
-// Hàm validation
-const validateProductFields = ({
-  name,
-  price,
-  stoke,
-  description,
-  image,
-  category,
-}: RequestProduct) => {
-  if (!name || !price || !stoke || !description || !image || !category) {
-    throw new Error("Missing required fields");
-  }
-
-  if (typeof price !== "number" || typeof stoke !== "number") {
-    throw new Error("Price and stoke must be numbers");
-  }
-};
-
 // function create and update product with validation
 export const createdProduct = async (
   req: express.Request,
   res: express.Response
 ) => {
   try {
-    const { name, price, stoke, description, image, category } =
+    const { name, price, quantity, description, image, category } =
       req.body as RequestProduct;
     const { id: userId } = req.user as any;
 
-    if (!name || !price || !stoke || !description || !image || !category) {
+    if (!name || !price || !quantity || !description || !image || !category) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
@@ -148,7 +136,7 @@ export const createdProduct = async (
     const newProduct = await createProduct({
       name,
       price,
-      stoke,
+      quantity,
       description,
       image,
       category: existCategory._id || "",
@@ -173,13 +161,13 @@ export const updateProduct = async (
 ) => {
   try {
     const { id } = req.params;
-    const { name, price, stoke, description, image, category, createdBy } =
+    const { name, price, quantity, description, image, category, createdBy } =
       req.body as RequestProduct;
 
     if (
       !name ||
       !price ||
-      !stoke ||
+      !quantity ||
       !description ||
       !image ||
       !category ||
@@ -208,7 +196,7 @@ export const updateProduct = async (
     await updateProductById(id, {
       name,
       price,
-      stoke,
+      quantity,
       description,
       image,
       category: existCategory._id,

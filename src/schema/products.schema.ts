@@ -4,7 +4,7 @@ import { IReview, reviewSchema } from "./reviews.schema";
 export interface IProduct extends Document {
   name: string;
   price: number;
-  stoke: number;
+  quantity: number;
   description: string;
   image: string[];
   createdBy: Schema.Types.ObjectId;
@@ -16,7 +16,7 @@ export interface IProduct extends Document {
 export interface RequestProduct {
   name: string;
   price: number;
-  stoke: number;
+  quantity: number;
   description: string;
   image: string[];
   createdBy?: Schema.Types.ObjectId;
@@ -26,7 +26,7 @@ export interface RequestProduct {
 export const productSchema = new Schema<IProduct>({
   name: { type: String, required: true, unique: true },
   price: { type: Number, required: true },
-  stoke: { type: Number, required: true },
+  quantity: { type: Number, required: true },
   description: { type: String, required: true },
   image: [{ type: String, required: true }],
   createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
