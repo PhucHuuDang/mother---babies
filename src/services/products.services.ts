@@ -15,6 +15,7 @@ export const getProducts = async (
   const products = await ProductModel.find(filter)
     .populate("category", "name")
     .populate("createdBy", "username")
+    .populate("updatedBy", "username")
     .skip(skip)
     .limit(limit)
     .lean<IProduct[]>();
@@ -27,7 +28,12 @@ export const getProducts = async (
   return { products, totalPages, page, limit };
 };
 
-export const getProductById = (id: string) => ProductModel.findById(id);
+export const getProductById = (id: string) =>
+  ProductModel.findById(id)
+    .populate("category", "name")
+    .populate("createdBy", "username")
+    .populate("updatedBy", "username")
+    .lean<IProduct>();
 
 export const getProductByCatogoryID = (id: string) =>
   ProductModel.find({ category: id }).lean<IProduct>();

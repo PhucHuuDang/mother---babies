@@ -22,6 +22,9 @@ export const getUsers = async (
 
 export const getUserByEmail = (email: string) => UserModel.findOne({ email });
 
+export const getUserByUsername = (username: string) =>
+  UserModel.findOne({ username }).select("-password").lean<IUser>();
+
 export const getUserById = (id: string) =>
   UserModel.findById(id).select("-password").lean<IUser>();
 

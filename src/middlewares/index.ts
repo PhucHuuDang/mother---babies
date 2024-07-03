@@ -85,3 +85,17 @@ export const adminOrStaff = (
       .json({ success: false, message: "Not authorized as a staff or admin" });
   }
 };
+
+export const userOrStaff = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  if (req.user && (req.user.role === "staff" || req.user.role === "user")) {
+    next();
+  } else {
+    res
+      .status(403)
+      .json({ success: false, message: "Not authorized as a staff or user" });
+  }
+};

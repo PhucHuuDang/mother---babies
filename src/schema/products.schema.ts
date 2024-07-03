@@ -8,6 +8,7 @@ export interface IProduct extends Document {
   description: string;
   image: string[];
   createdBy: Schema.Types.ObjectId;
+  updatedBy: Schema.Types.ObjectId;
   reviews: IReview[];
   category: Schema.Types.ObjectId;
 }
@@ -18,7 +19,7 @@ export interface RequestProduct {
   stoke: number;
   description: string;
   image: string[];
-  createdBy: string;
+  createdBy?: Schema.Types.ObjectId;
   category: string;
 }
 
@@ -29,6 +30,7 @@ export const productSchema = new Schema<IProduct>({
   description: { type: String, required: true },
   image: [{ type: String, required: true }],
   createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  updatedBy: { type: Schema.Types.ObjectId, ref: "User" },
   reviews: [reviewSchema],
   category: { type: Schema.Types.ObjectId, ref: "Category", required: true },
 });
