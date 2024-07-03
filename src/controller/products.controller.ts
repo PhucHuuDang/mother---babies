@@ -71,6 +71,13 @@ export const findProduct = async (
 
     const updateProduct = {
       ...product,
+      reviews: reviews.map((review: IReview) => {
+        return {
+          ...review,
+          userId: (review.userId as unknown as IUser)._id,
+          username: (review.userId as unknown as IUser).username,
+        };
+      }),
       category: (product.category as unknown as ICategory).name,
       createdBy: (product.createdBy as unknown as IUser).username,
       updatedBy: product.updatedBy
@@ -78,7 +85,7 @@ export const findProduct = async (
         : undefined,
     };
 
-    return res.status(200).json({ product: updateProduct, totalRating });
+    return res.status(200).json({ totalRating, product: updateProduct });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: "Internal server error" });
@@ -122,7 +129,7 @@ export const createdProduct = async (
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    const existCategory = await getCategoryById(category);
+    const existCategory = await getCategoryByName(category);
     const existUser = await getUserById(userId);
 
     if (!existCategory) {
@@ -148,6 +155,8 @@ export const createdProduct = async (
       productId: newProduct._id || "",
     });
   } catch (error) {
+    console.log(error);
+
     if (error.code === 11000) {
       return res.status(400).json({ message: "Product name is already taken" });
     }

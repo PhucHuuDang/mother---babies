@@ -1,10 +1,16 @@
 import express from "express";
 import { protect, userOrStaff } from "../middlewares";
-import { commentFeedback } from "../controller/reviews.controller";
+import {
+  commentFeedback,
+  deletedReview,
+  updateReview,
+} from "../controller/reviews.controller";
 export default (router: express.Router) => {
-  router.route("/reviews/:watchID").post(protect, userOrStaff, commentFeedback);
   router
-    .route("/reviews/:watchID/:reviewID")
-    .delete(protect, userOrStaff, commentFeedback)
-    .put(protect, userOrStaff, commentFeedback);
+    .route("/reviews/:productId")
+    .post(protect, userOrStaff, commentFeedback);
+  router
+    .route("/reviews/:productId/:reviewID")
+    .delete(protect, userOrStaff, deletedReview)
+    .put(protect, userOrStaff, updateReview);
 };

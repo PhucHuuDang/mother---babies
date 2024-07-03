@@ -1,4 +1,4 @@
-import { IProduct, ProductModel } from "../schema";
+import { IProduct, IReview, ProductModel } from "../schema";
 
 export const getProducts = async (
   query: string = "",
@@ -20,23 +20,25 @@ export const getProducts = async (
     .limit(limit)
     .lean<IProduct[]>();
 
-  console.log(products);
-
   const total = await ProductModel.countDocuments(filter);
   const totalPages = Math.ceil(total / limit);
 
   return { products, totalPages, page, limit };
 };
 
-export const getProductById = (id: string) =>
-  ProductModel.findById(id)
+export const getProductById = async (id: string) => {
+  const product = await ProductModel.findById(id)
     .populate("category", "name")
     .populate("createdBy", "username")
     .populate("updatedBy", "username")
-    .lean<IProduct>();
+    .populate("reviews.userId", "username")
+    .lean<IProduct>()
+    .exec();
+  return product;
+};
 
 export const getProductByCatogoryID = (id: string) =>
-  ProductModel.find({ category: id }).lean<IProduct>();
+  ProductModel.find({ category: id }).lean<IProduct>().exec();
 
 export const createProduct = (values: Record<string, any>) =>
   new ProductModel(values).save().then((product) => product.toObject());
@@ -46,3 +48,44 @@ export const deleteProductById = (id: string) =>
 
 export const updateProductById = (id: string, values: Record<string, any>) =>
   ProductModel.findByIdAndUpdate(id, values);
+
+export const addReviewInProduct = async (id: string, value: IReview) => {
+  const product = await ProductModel.findByIdAndUpdate(id, {
+    $push: { reviews: value },
+  });
+
+  return product;
+};
+
+export const updateProductByReviewID = async (
+  productId: string,
+  reviewID: string,
+  updateReview: IReview
+) => {
+  const product = await ProductModel.findOneAndUpdate(
+    {
+      _id: productId,
+      "reviews._id": reviewID,
+    },
+    {
+      $set: {
+        "reviews.$.content": updateReview.content,
+        "reviews.$.rating": updateReview.rating,
+      },
+    },
+    { new: true }
+  );
+  return product;
+};
+
+export const deleteProductByReviewId = async (id: string, reviewId: string) => {
+  const product = await ProductModel.findByIdAndUpdate(
+    id,
+    {
+      $pull: { reviews: { _id: reviewId } },
+    },
+    { new: true }
+  );
+
+  return product;
+};

@@ -12,10 +12,12 @@ export const getUsers = async (
   }
 
   const skip = (page - 1) * limit;
-  const users = await UserModel.find(filter).skip(skip).limit(limit);
+  const users = await UserModel.find(filter)
+    .skip(skip)
+    .limit(limit)
+    .select("-password");
   const total = await UserModel.countDocuments(filter);
   const totalPages = Math.ceil(total / limit);
-  console.log(users);
 
   return { users, totalPages, page, limit };
 };
