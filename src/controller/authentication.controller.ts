@@ -79,7 +79,7 @@ export const register = async (req: express.Request, res: express.Response) => {
     // Check if the email, username, and password are provided
     if (!email || !username || !password) {
       console.log("Missing fields");
-      return res.sendStatus(400);
+      return res.status(400).json({ message: "Missing fields" }).end();
     }
 
     const existingUser = await getUserByEmail(email);
@@ -109,7 +109,7 @@ export const register = async (req: express.Request, res: express.Response) => {
     return res.status(201).json({ message: "User created" }).end();
   } catch (error) {
     console.log(error);
-    return res.sendStatus(400);
+    return res.status(500).json({ message: "Internal server error" }).end();
   }
 };
 
@@ -127,6 +127,10 @@ export const changePassword = async (
       return res.status(400).json({ message: "User not found" }).end();
     }
 
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ message: "Missing fields" }).end();
+    }
+
     if (userId !== id) {
       return res.status(403).json({ message: "Forbidden" }).end();
     }
@@ -141,6 +145,6 @@ export const changePassword = async (
     return res.status(200).json({ message: "Password updated" }).end();
   } catch (error) {
     console.log(error);
-    return res.sendStatus(400);
+    return res.status(500).json({ message: "Internal server error" }).end();
   }
 };

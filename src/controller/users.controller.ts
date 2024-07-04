@@ -69,11 +69,6 @@ export const deleteUser = async (
   try {
     const { id } = req.params;
     const { id: authId, role } = req.user as any;
-
-    console.log("req.user", id);
-    console.log("role", role);
-    console.log("authId", authId);
-
     const user = await getUserById(id);
 
     // Check if the user is staff and trying to delete a user and admin
@@ -111,7 +106,7 @@ export const updateUser = async (
     }
 
     // Check if the fields are provided
-    if (!username || !phone || !avatar) {
+    if (!username || !phone || !avatar || !points || !voucher) {
       return res.status(400).json({ message: "Missing fields" }).end();
     }
 

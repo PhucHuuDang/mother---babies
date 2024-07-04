@@ -15,7 +15,9 @@ export const getUsers = async (
   const users = await UserModel.find(filter)
     .skip(skip)
     .limit(limit)
-    .select("-password");
+    .select("-password")
+    .lean<IUser[]>();
+
   const total = await UserModel.countDocuments(filter);
   const totalPages = Math.ceil(total / limit);
 
@@ -30,6 +32,14 @@ export const getUserByUsername = async (username: string) =>
 
 export const getUserById = async (id: string) =>
   await UserModel.findById(id).select("-password").lean<IUser>();
+
+export const getUserByVoucherId = async (id: string) => {
+  const user = await UserModel.find({
+    vouchers: { $elemMatch: { _id: id } },
+  });
+
+  return user;
+};
 
 export const createUser = async (values: Record<string, any>) =>
   await new UserModel(values).save().then((user) => user.toObject());
@@ -48,7 +58,10 @@ export const updatePoints = async (id: string, points: number) => {
   return await UserModel.findByIdAndUpdate(id, { points });
 };
 
-export const addReportFromUser = async (id: string, value: Record<string, any>) => {
+export const addReportFromUser = async (
+  id: string,
+  value: Record<string, any>
+) => {
   return await UserModel.findByIdAndUpdate(id, {
     $push: { reports: value },
   });
@@ -82,14 +95,39 @@ export const deleteReportFromUser = async (id: string, reportID: string) => {
   );
 };
 
-export const addVoucher = async (id: string, value: Record<string, any>) => {
+export const addVoucherFromUser = async (
+  id: string,
+  value: Record<string, any>
+) => {
   return await UserModel.findByIdAndUpdate(id, {
     $push: { vouchers: value },
   });
 };
 
-export const updateVoucher = async (
+export const updateVoucherFromUser = async (
   id: string,
   voucherID: string,
   value: Record<string, any>
-) => {};
+) => {
+  return await UserModel.findByIdAndUpdate(
+    { _id: id, "vouchers._id": voucherID },
+    {
+      $set: {
+        "vouchers.$.code": value.code,
+        "vouchers.$.status": value.status,
+        "vouchers.$.discount": value.discount,
+      },
+    },
+    { new: true }
+  );
+};
+
+export const deleteVoucherFromUser = async (id: string, voucherID: string) => {
+  return await UserModel.findByIdAndUpdate(
+    id,
+    {
+      $pull: { vouchers: { _id: voucherID } },
+    },
+    { new: true }
+  );
+};

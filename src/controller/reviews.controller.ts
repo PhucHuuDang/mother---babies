@@ -75,9 +75,6 @@ export const deletedReview = async (
       return res.status(404).json({ message: "Review not found" });
     }
 
-    console.log("review", review);
-    console.log("userId", userId);
-
     // Check user is owner of review
     if (review.userId.toString() !== userId) {
       return res.status(403).json({ message: "Forbidden" });

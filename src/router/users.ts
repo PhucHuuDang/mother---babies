@@ -5,7 +5,8 @@ import {
   getAllUsers,
   updateUser,
 } from "../controller/users.controller";
-import { admin, adminOrStaff, protect, user } from "../middlewares";
+import { adminOrStaff, protect, user } from "../middlewares";
+import { changePassword } from "../controller/authentication.controller";
 
 export default (router: express.Router) => {
   router.route("/users").get(protect, adminOrStaff, getAllUsers);
@@ -14,4 +15,6 @@ export default (router: express.Router) => {
     .get(protect, findUser)
     .put(protect, user, updateUser)
     .delete(protect, adminOrStaff, deleteUser);
+
+  router.route("/users/:id/change-password").put(protect, changePassword);
 };
