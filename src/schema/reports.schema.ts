@@ -1,17 +1,57 @@
 import { Schema, model, Document } from "mongoose";
 
-interface IReport extends Document {
-  title: string;
-  content: string;
-  status: "pending" | "resolved";
-  createBy: Schema.Types.ObjectId;
+export interface IReport extends Document {
+  reporterId: Schema.Types.ObjectId; // User
+  reportedItemId: Schema.Types.ObjectId; // Product
+  reportType:
+    | "product_quality"
+    | "delivery_issue"
+    | "payment_problem"
+    | "customer_service"
+    | "other";
+  description: string;
+  status: "pending" | "reviewed" | "resolved";
+  reviewedBy?: Schema.Types.ObjectId;
+  reviewedAt?: Date;
 }
 
-const reportSchema = new Schema<IReport>({
-  title: { type: String, required: true, unique: true },
-  content: { type: String, required: true },
-  status: { type: String, required: true },
-  createBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
+export interface RequestReport {
+  reporter?: string;
+  reportedItem: string;
+  reportType:
+    | "product_quality"
+    | "delivery_issue"
+    | "payment_problem"
+    | "customer_service"
+    | "other";
+  description: string;
+  status: "pending" | "reviewed" | "resolved";
+  reviewedBy?: string;
+  reviewedAt?: Date;
+}
+
+export const reportSchema = new Schema<IReport>({
+  reporterId: { type: Schema.Types.ObjectId, ref: "User" },
+  reportedItemId: { type: Schema.Types.ObjectId, ref: "Product" },
+  reportType: {
+    type: String,
+    enum: [
+      "product_quality",
+      "delivery_issue",
+      "payment_problem",
+      "customer_service",
+      "other",
+    ],
+    required: true,
+  },
+  description: { type: String, required: true },
+  status: {
+    type: String,
+    enum: ["pending", "reviewed", "resolved"],
+    default: "pending",
+  },
+  reviewedBy: { type: Schema.Types.ObjectId, ref: "User" },
+  reviewedAt: { type: Date },
 });
 
 export const ReportModel = model<IReport>("Report", reportSchema);

@@ -21,10 +21,22 @@ export const getAllUsers = async (
     const limit = parseInt(req.query.limit as string) || 10;
     const query = (req.query.query as string) || "";
 
+    const { role } = req.user as any;
+
     const { users, totalPages } = await getUsers(query, page, limit);
 
     if (users.length === 0 || !users) {
       return res.status(200).json({ message: "User's list is empty" });
+    }
+
+    if (role === "staff") {
+      const listStaff = users.filter(
+        (user) => user.role === "staff" || user.role === "admin"
+      );
+
+      return res
+        .status(200)
+        .json({ users: listStaff, total: totalPages, page, limit });
     }
 
     return res.status(200).json({ users, total: totalPages, page, limit });
@@ -56,10 +68,17 @@ export const deleteUser = async (
 ) => {
   try {
     const { id } = req.params;
-    const { role } = req.user as any;
+    const { id: authId, role } = req.user as any;
+    const user = await getUserById(id);
 
-    if (role !== "admin") {
-      return res.status(403).json({ message: "Forbidden" }).end();
+    // Check if the user is staff and trying to delete a user and admin
+    if (role === "staff" && (user.role === "user" || user.role === "admin")) {
+      return res.status(403).json({ message: "Forbidden staff" }).end();
+    }
+
+    // Check if the user ID matches the token
+    if (authId === id) {
+      return res.status(403).json({ message: "Can't delete yourself" }).end();
     }
 
     // Delete user from database
@@ -87,7 +106,7 @@ export const updateUser = async (
     }
 
     // Check if the fields are provided
-    if (!username || !phone || !avatar) {
+    if (!username || !phone || !avatar || !points || !voucher) {
       return res.status(400).json({ message: "Missing fields" }).end();
     }
 

@@ -103,7 +103,7 @@ export const deleteCategory = async (
     if (product) {
       return res
         .status(400)
-        .json({ message: "Category is in use by a product" });
+        .json({ message: "Category being used by a product" });
     }
 
     await deleteCategoryById(categoryId);

@@ -1,5 +1,6 @@
 import { Schema, model } from "mongoose";
 import { IVoucher, voucherSchema } from "./vouchers.schema";
+import { IReport, reportSchema } from "./reports.schema";
 
 export interface IUser extends Document {
   _id?: string;
@@ -10,7 +11,8 @@ export interface IUser extends Document {
   avatar?: string;
   password: string;
   points?: number;
-  voucher?: IVoucher[];
+  vouchers?: IVoucher[];
+  reports?: IReport[];
 }
 
 export interface RequestUser {
@@ -20,8 +22,9 @@ export interface RequestUser {
   phone: string;
   avatar: string;
   role?: "admin" | "user" | "staff";
-  points: number;
-  voucher: IVoucher[];
+  points?: number;
+  voucher?: IVoucher[];
+  reports?: IReport[];
 }
 
 export const UserSchema = new Schema<IUser>({
@@ -32,7 +35,8 @@ export const UserSchema = new Schema<IUser>({
   avatar: { type: String },
   password: { type: String, required: true },
   points: { type: Number, default: 0 },
-  voucher: [voucherSchema],
+  vouchers: [voucherSchema],
+  reports: [reportSchema],
 });
 
 export const UserModel = model<IUser>("User", UserSchema);

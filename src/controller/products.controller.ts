@@ -1,6 +1,11 @@
 import express from "express";
 import { ICategory, IProduct, IReview, IUser, RequestProduct } from "../schema";
-import { getCategoryById, getUserById } from "../services";
+import {
+  getCategoryById,
+  getCategoryByName,
+  getUserById,
+  getUserByUsername,
+} from "../services";
 import {
   createProduct,
   deleteProductById,
@@ -20,13 +25,18 @@ export const getAllProducts = async (
     const { products, totalPages } = await getProducts(query, page, limit);
 
     if (products.length === 0 || !products) {
-      return res.status(200).json({ message: "Product's list is empty" });
+      return res
+        .status(200)
+        .json({ message: "Product's list is empty", products: [] });
     }
 
     const formattedProducts = products.map((product: IProduct) => ({
       ...product,
       category: (product.category as unknown as ICategory).name,
       createdBy: (product.createdBy as unknown as IUser).username,
+      updatedBy: product.updatedBy
+        ? (product.updatedBy as unknown as IUser).username
+        : undefined,
     }));
 
     return res
@@ -59,27 +69,23 @@ export const findProduct = async (
           reviews.length
         : 0;
 
-    // Get username of the user who created the product
-    // Get category name of the product
-    const userCreatedBy = await getUserById(product.createdBy.toString());
-    const category = await getCategoryById(product.category.toString());
-
-    // Add username to each review
-    const reviewsWithMember = await Promise.all(
-      product.reviews.map(async (review: IReview) => {
-        const user = await getUserById(review.userId.toString());
-        return { ...review.toObject(), userName: user ? user.username : "" };
-      })
-    );
-
     const updateProduct = {
-      ...product.toObject(),
-      category: category.name,
-      createdBy: userCreatedBy.username,
-      reviews: reviewsWithMember,
+      ...product,
+      reviews: reviews.map((review: IReview) => {
+        return {
+          ...review,
+          userId: (review.userId as unknown as IUser)._id,
+          username: (review.userId as unknown as IUser).username,
+        };
+      }),
+      category: (product.category as unknown as ICategory).name,
+      createdBy: (product.createdBy as unknown as IUser).username,
+      updatedBy: product.updatedBy
+        ? (product.updatedBy as unknown as IUser).username
+        : undefined,
     };
 
-    return res.status(200).json({ product: updateProduct, totalRating });
+    return res.status(200).json({ totalRating, product: updateProduct });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: "Internal server error" });
@@ -93,6 +99,12 @@ export const deleteProduct = async (
   try {
     const { id } = req.params;
 
+    // Check product exist
+    const product = await getProductById(id);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
     // Delete product from database
     await deleteProductById(id);
 
@@ -103,84 +115,51 @@ export const deleteProduct = async (
   }
 };
 
-// Hàm validation
-const validateProductFields = ({
-  name,
-  price,
-  stoke,
-  description,
-  image,
-  category,
-}: RequestProduct) => {
-  if (!name || !price || !stoke || !description || !image || !category) {
-    throw new Error("Missing required fields");
-  }
-
-  if (typeof price !== "number" || typeof stoke !== "number") {
-    throw new Error("Price and stoke must be numbers");
-  }
-};
-
-// Middleware check category existence
-export const checkCategoryExistence = async (
-  req: express.Request,
-  res: express.Response,
-  next: express.NextFunction
-) => {
-  const { category } = req.body as RequestProduct;
-  const existCategory = await getCategoryById(category.toString());
-  if (!existCategory) {
-    return res.status(400).json({ message: "Category is not found" });
-  }
-  next();
-};
-
-// Middleware check existence of user
-export const checkUserExistence = async (
-  req: express.Request,
-  res: express.Response,
-  next: express.NextFunction
-) => {
-  const { createdBy } = req.body as RequestProduct;
-  const existUser = await getUserById(createdBy.toString());
-  if (!existUser) {
-    return res.status(400).json({ message: "User is not found" });
-  }
-  next();
-};
-
 // function create and update product with validation
 export const createdProduct = async (
   req: express.Request,
   res: express.Response
 ) => {
   try {
-    validateProductFields(req.body as RequestProduct);
-    await checkCategoryExistence(req, res, () => {});
-
-    const { name, price, stoke, description, image, category } =
+    const { name, price, quantity, description, image, category } =
       req.body as RequestProduct;
     const { id: userId } = req.user as any;
 
-    const existCategory = await getCategoryById(category);
+    if (!name || !price || !quantity || !description || !image || !category) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    const existCategory = await getCategoryByName(category);
     const existUser = await getUserById(userId);
+
+    if (!existCategory) {
+      return res.status(400).json({ message: "Category is not found" });
+    }
+
+    if (!existUser) {
+      return res.status(400).json({ message: "User is not found" });
+    }
 
     const newProduct = await createProduct({
       name,
       price,
-      stoke,
+      quantity,
       description,
       image,
-      category: existCategory._id,
-      createdBy: existUser._id,
+      category: existCategory._id || "",
+      createdBy: existUser._id || "",
     });
 
     return res.status(200).json({
       message: "Product created successfully",
-      productId: newProduct._id,
+      productId: newProduct._id || "",
     });
   } catch (error) {
     console.log(error);
+
+    if (error.code === 11000) {
+      return res.status(400).json({ message: "Product name is already taken" });
+    }
     return res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -190,31 +169,62 @@ export const updateProduct = async (
   res: express.Response
 ) => {
   try {
-    validateProductFields(req.body as RequestProduct);
-    await checkCategoryExistence(req, res, () => {});
-    await checkUserExistence(req, res, () => {});
-
     const { id } = req.params;
-    const { name, price, stoke, description, image, category, createdBy } =
+    const { name, price, quantity, description, image, category, createdBy } =
       req.body as RequestProduct;
 
-    const existCategory = await getCategoryById(category);
+    const product = await getProductById(id);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    if (
+      !name ||
+      !price ||
+      !quantity ||
+      !description ||
+      !image ||
+      !category ||
+      !createdBy
+    ) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    const { id: userId } = req.user as any;
+
+    const existCategory = await getCategoryByName(category);
+    if (!existCategory) {
+      return res.status(400).json({ message: "Category is not found" });
+    }
+
+    const user = await getUserByUsername(createdBy.toString());
+    if (!user) {
+      return res.status(400).json({ message: "User is not found" });
+    }
+
+    let updatedBy = user._id;
+    if (userId !== user._id.toString()) {
+      updatedBy = userId;
+    }
 
     await updateProductById(id, {
       name,
       price,
-      stoke,
+      quantity,
       description,
       image,
       category: existCategory._id,
-      createdBy: createdBy,
+      createdBy: user._id,
+      updatedBy: updatedBy,
     });
 
     return res
       .status(200)
       .json({ message: "Product updated successfully", id });
   } catch (error) {
-    console.log(error);
+    if (error.codeName === "DuplicateKey") {
+      return res.status(400).json({ message: "Product name is already taken" });
+    }
     return res.status(500).json({ message: "Internal server error" });
   }
 };

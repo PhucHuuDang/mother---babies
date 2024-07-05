@@ -15,7 +15,7 @@ export default (router: express.Router) => {
     .post(protect, adminOrStaff, createCategory);
 
   router
-    .route("/categories/:id")
+    .route("/categories/:categoryId")
     .get(protect, getCategory)
     .put(protect, adminOrStaff, updateCategory)
     .delete(protect, adminOrStaff, deleteCategory);
